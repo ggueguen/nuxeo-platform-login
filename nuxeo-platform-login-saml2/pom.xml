@@ -11,6 +11,10 @@
     <name>SAML v2 authentication plugin for Nuxeo EP</name>
     <description>Nuxeo Enterprise Platform: SAML v2</description>
 
+	<build>
+		<finalName>${project.artifactId}-PE</finalName>
+	</build>
+	
     <dependencies>
         <dependency>
             <groupId>org.nuxeo.ecm.platform</groupId>
