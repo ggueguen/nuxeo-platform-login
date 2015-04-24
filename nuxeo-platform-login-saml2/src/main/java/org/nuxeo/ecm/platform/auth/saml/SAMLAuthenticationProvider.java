@@ -16,6 +16,21 @@
  */
 package org.nuxeo.ecm.platform.auth.saml;
 
+import static org.nuxeo.ecm.platform.ui.web.auth.NXAuthConstants.LOGIN_ERROR;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,8 +63,17 @@ import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.encryption.Decrypter;
 import org.opensaml.saml2.encryption.EncryptedElementTypeEncryptedKeyResolver;
-import org.opensaml.saml2.metadata.*;
-import org.opensaml.saml2.metadata.provider.*;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.SingleLogoutService;
+import org.opensaml.saml2.metadata.SingleSignOnService;
+import org.opensaml.saml2.metadata.provider.AbstractMetadataProvider;
+import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
+import org.opensaml.saml2.metadata.provider.HTTPMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.security.MetadataCredentialResolver;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.ws.transport.InTransport;
@@ -71,20 +95,6 @@ import org.opensaml.xml.signature.impl.ExplicitKeySignatureTrustEngine;
 import org.opensaml.xml.util.Pair;
 import org.opensaml.xml.util.XMLHelper;
 import org.w3c.dom.Element;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.nuxeo.ecm.platform.ui.web.auth.NXAuthConstants.LOGIN_ERROR;
 
 /**
  * A SAML2 authentication provider.
@@ -137,7 +147,7 @@ public class SAMLAuthenticationProvider
 
         // Initialize the User Resolver
         try {
-            userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
+            this.userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
         } catch (Exception e) {
             log.error("Failed to instantiate UserResolver", e);
         }
@@ -152,26 +162,26 @@ public class SAMLAuthenticationProvider
         // Read the IdP metadata and initialize the supported profiles
         try {
             // Read the IdP metadata
-            initializeMetadataProvider(parameters);
+            this.initializeMetadataProvider(parameters);
 
             // Setup Signature Trust Engine
             MetadataCredentialResolver metadataCredentialResolver =
-                    new MetadataCredentialResolver(metadataProvider);
-            trustEngine = new ExplicitKeySignatureTrustEngine(
+                    new MetadataCredentialResolver(this.metadataProvider);
+            this.trustEngine = new ExplicitKeySignatureTrustEngine(
                     metadataCredentialResolver,
                     org.opensaml.xml.Configuration.getGlobalSecurityConfiguration().getDefaultKeyInfoCredentialResolver());
 
             // Setup decrypter
-            Credential encryptionCredential = getKeyManager().getEncryptionCredential();
+            Credential encryptionCredential = this.getKeyManager().getEncryptionCredential();
             if (encryptionCredential != null) {
                 KeyInfoCredentialResolver resolver = new StaticKeyInfoCredentialResolver(
                         encryptionCredential);
-                decrypter = new Decrypter(null, resolver, encryptedKeyResolver);
-                decrypter.setRootInNewDocument(true);
+                this.decrypter = new Decrypter(null, resolver, encryptedKeyResolver);
+                this.decrypter.setRootInNewDocument(true);
             }
 
             // Process IdP roles
-            for (RoleDescriptor roleDescriptor : getIdPDescriptor().getRoleDescriptors()) {
+            for (RoleDescriptor roleDescriptor : this.getIdPDescriptor().getRoleDescriptors()) {
 
                 // Web SSO role
                 if (roleDescriptor.getElementQName().equals(IDPSSODescriptor.DEFAULT_ELEMENT_NAME) &&
@@ -183,7 +193,7 @@ public class SAMLAuthenticationProvider
                     // SSO
                     for (SingleSignOnService sso : idpSSO.getSingleSignOnServices()) {
                         if (sso.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI)) {
-                            addProfile(new WebSSOProfileImpl(sso));
+                            this.addProfile(new WebSSOProfileImpl(sso));
                             break;
                         }
                     }
@@ -191,7 +201,7 @@ public class SAMLAuthenticationProvider
                     // SLO
                     for (SingleLogoutService slo : idpSSO.getSingleLogoutServices()) {
                         if (slo.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI)) {
-                            addProfile(new SLOProfileImpl(slo));
+                            this.addProfile(new SLOProfileImpl(slo));
                             break;
                         }
                     }
@@ -218,9 +228,9 @@ public class SAMLAuthenticationProvider
     }
 
     private void addProfile(AbstractSAMLProfile profile) {
-        profile.setTrustEngine(trustEngine);
-        profile.setDecrypter(decrypter);
-        profiles.put(profile.getProfileIdentifier(), profile);
+        profile.setTrustEngine(this.trustEngine);
+        profile.setDecrypter(this.decrypter);
+        this.profiles.put(profile.getProfileIdentifier(), profile);
     }
 
     private void initializeMetadataProvider(Map<String, String> parameters)
@@ -252,24 +262,24 @@ public class SAMLAuthenticationProvider
 
     private EntityDescriptor getIdPDescriptor()
             throws MetadataProviderException {
-        return (EntityDescriptor) metadataProvider.getMetadata();
+        return (EntityDescriptor) this.metadataProvider.getMetadata();
     }
 
     /**
      * Returns a Login URL to use with HTTP Redirect
      */
     protected String getSSOUrl(HttpServletRequest request, HttpServletResponse response) {
-        WebSSOProfile sso = (WebSSOProfile) profiles.get(WebSSOProfile.PROFILE_URI);
+        WebSSOProfile sso = (WebSSOProfile) this.profiles.get(WebSSOProfile.PROFILE_URI);
         if (sso == null) {
             return null;
         }
 
         // Create and populate the context
         SAMLMessageContext context = new BasicSAMLMessageContext();
-        populateLocalContext(context);
+        this.populateLocalContext(context);
 
         // Store the requested URL in the Relay State
-        String requestedUrl = getRequestedUrl(request);
+        String requestedUrl = this.getRequestedUrl(request);
         if (requestedUrl != null) {
             context.setRelayState(requestedUrl);
         }
@@ -293,6 +303,12 @@ public class SAMLAuthenticationProvider
             Element dom = marshaller.marshall(authnRequest);
             StringWriter buffer = new StringWriter();
             XMLHelper.writeNode(dom, buffer);
+            
+            // TODO _ggu
+            log.debug(">>>>>>>>>>>> SAML request");
+            log.debug(buffer.toString());
+            log.debug("<<<<<<<<<<<< SAML request");
+            
             encodedSaml = Base64.encodeBase64String(
                     buffer.toString().getBytes());
         } catch (SAMLException e) {
@@ -329,14 +345,14 @@ public class SAMLAuthenticationProvider
 
     @Override
     public String computeUrl(HttpServletRequest request, String requestedUrl) {
-        return getSSOUrl(request, null);
+        return this.getSSOUrl(request, null);
     }
 
     @Override
     public Boolean handleLoginPrompt(HttpServletRequest request,
             HttpServletResponse response, String baseURL) {
 
-        String loginURL = getSSOUrl(request, response);
+        String loginURL = this.getSSOUrl(request, response);
 
         if (log.isDebugEnabled()) {
             log.debug("Send redirect to " + loginURL);
@@ -359,7 +375,7 @@ public class SAMLAuthenticationProvider
 
         HttpServletRequestAdapter inTransport = new HttpServletRequestAdapter(
                 request);
-        SAMLBinding binding = getBinding(inTransport);
+        SAMLBinding binding = this.getBinding(inTransport);
 
         // Check if we support this binding
         if (binding == null) {
@@ -373,7 +389,7 @@ public class SAMLAuthenticationProvider
         SAMLMessageContext context = new BasicSAMLMessageContext();
         context.setInboundMessageTransport(inTransport);
         context.setOutboundMessageTransport(outTransport);
-        populateLocalContext(context);
+        this.populateLocalContext(context);
 
         // Decode the message
         try {
@@ -386,10 +402,10 @@ public class SAMLAuthenticationProvider
         // Set Peer context info if needed
         try {
             if (context.getPeerEntityId() == null) {
-                context.setPeerEntityId(getIdPDescriptor().getEntityID());
+                context.setPeerEntityId(this.getIdPDescriptor().getEntityID());
             }
             if (context.getPeerEntityMetadata() == null) {
-                context.setPeerEntityMetadata(getIdPDescriptor());
+                context.setPeerEntityMetadata(this.getIdPDescriptor());
             }
             if (context.getPeerEntityRole() == null) {
                 context.setPeerEntityRole(
@@ -414,7 +430,7 @@ public class SAMLAuthenticationProvider
         }*/
 
         // Check for a response processor for this profile
-        AbstractSAMLProfile processor = getProcessor(context);
+        AbstractSAMLProfile processor = this.getProcessor(context);
 
         if (processor == null) {
             log.warn("Unsupported profile encountered in the context " +
@@ -438,7 +454,7 @@ public class SAMLAuthenticationProvider
                     slo.processLogoutResponse(context);
                     // Handle SLO request
                 } else if (message instanceof LogoutRequest) {
-                    SAMLCredential credential = getSamlCredential(request);
+                    SAMLCredential credential = this.getSamlCredential(request);
                     slo.processLogoutRequest(context, credential);
                 }
             } catch (Exception e) {
@@ -458,21 +474,21 @@ public class SAMLAuthenticationProvider
             return null;
         }
 
-        String userId = userResolver.findNuxeoUser(credential);
+        String userId = this.userResolver.findNuxeoUser(credential);
 
         if (userId == null) {
-            sendError(request, "No user found with email: \"" +
+            this.sendError(request, "No user found with email: \"" +
                     credential.getNameID().getValue() + "\".");
             return null;
         }
 
         // Store session id in a cookie
-        if (credential.getSessionIndexes() != null &&
+        if ((credential.getSessionIndexes() != null) &&
                 !credential.getSessionIndexes().isEmpty()) {
             String nameValue = credential.getNameID().getValue();
             String nameFormat = credential.getNameID().getFormat();
             String sessionId = credential.getSessionIndexes().get(0);
-            addCookie(response, SAML_SESSION_KEY,
+            this.addCookie(response, SAML_SESSION_KEY,
                     sessionId + "|" + nameValue + "|" + nameFormat);
         }
 
@@ -482,14 +498,14 @@ public class SAMLAuthenticationProvider
     protected AbstractSAMLProfile getProcessor(SAMLMessageContext context) {
         String profileId;
         SAMLObject message = context.getInboundSAMLMessage();
-        if (message instanceof LogoutResponse ||
-                message instanceof LogoutRequest) {
+        if ((message instanceof LogoutResponse) ||
+                (message instanceof LogoutRequest)) {
             profileId = SLOProfile.PROFILE_URI;
         } else {
             profileId = WebSSOProfile.PROFILE_URI;
         }
 
-        return profiles.get(profileId);
+        return this.profiles.get(profileId);
     }
 
     protected SAMLBinding getBinding(InTransport transport) {
@@ -513,7 +529,7 @@ public class SAMLAuthenticationProvider
         //context.setLocalEntityMetadata(entityDescriptor);
         //context.setLocalEntityRoleMetadata(roleDescriptor);
 
-        context.setMetadataProvider(metadataProvider);
+        context.setMetadataProvider(this.metadataProvider);
     }
 
     @Override
@@ -530,18 +546,18 @@ public class SAMLAuthenticationProvider
      * Returns a Logout URL to use with HTTP Redirect
      */
     protected String getSLOUrl(HttpServletRequest request, HttpServletResponse response) {
-        SLOProfile slo = (SLOProfile) profiles.get(SLOProfile.PROFILE_URI);
+        SLOProfile slo = (SLOProfile) this.profiles.get(SLOProfile.PROFILE_URI);
         if (slo == null) {
             return null;
         }
 
         String logoutURL = slo.getEndpoint().getLocation();
 
-        SAMLCredential credential = getSamlCredential(request);
+        SAMLCredential credential = this.getSamlCredential(request);
 
         // Create and populate the context
         SAMLMessageContext context = new BasicSAMLMessageContext();
-        populateLocalContext(context);
+        this.populateLocalContext(context);
 
         try {
             LogoutRequest logoutRequest = slo.buildLogoutRequest(context, credential);
@@ -575,7 +591,7 @@ public class SAMLAuthenticationProvider
         SAMLCredential credential = null;
 
         // Retrieve the SAMLCredential credential from cookie
-        Cookie cookie = getCookie(request, SAML_SESSION_KEY);
+        Cookie cookie = this.getCookie(request, SAML_SESSION_KEY);
         if (cookie != null) {
             String[] parts = cookie.getValue().split("\\|");
             String sessionId = parts[0];
@@ -600,7 +616,7 @@ public class SAMLAuthenticationProvider
     @Override
     public Boolean handleLogout(HttpServletRequest request,
             HttpServletResponse response) {
-        String logoutURL = getSLOUrl(request, response);
+        String logoutURL = this.getSLOUrl(request, response);
 
         if (logoutURL == null) {
             return false;
@@ -619,9 +635,9 @@ public class SAMLAuthenticationProvider
             return false;
         }
 
-        Cookie cookie = getCookie(request, SAML_SESSION_KEY);
+        Cookie cookie = this.getCookie(request, SAML_SESSION_KEY);
         if (cookie != null) {
-            removeCookie(response, cookie);
+            this.removeCookie(response, cookie);
         }
 
         return true;
@@ -632,10 +648,10 @@ public class SAMLAuthenticationProvider
     }
 
     private KeyManager getKeyManager() {
-        if (keyManager == null) {
-            keyManager = Framework.getLocalService(KeyManager.class);
+        if (this.keyManager == null) {
+            this.keyManager = Framework.getLocalService(KeyManager.class);
         }
-        return keyManager;
+        return this.keyManager;
     }
 
     private void addCookie(HttpServletResponse httpResponse, String name,
@@ -648,9 +664,9 @@ public class SAMLAuthenticationProvider
             String cookieName) {
         Cookie cookies[] = httpRequest.getCookies();
         if (cookies != null) {
-            for (int i = 0; i < cookies.length; i++) {
-                if (cookieName.equals(cookies[i].getName())) {
-                    return cookies[i];
+            for (Cookie cookie : cookies) {
+                if (cookieName.equals(cookie.getName())) {
+                    return cookie;
                 }
             }
         }
