@@ -105,15 +105,15 @@ import org.w3c.dom.Element;
 public class SAMLAuthenticationProvider
 implements NuxeoAuthenticationPlugin, LoginProviderLinkComputer,
 NuxeoAuthenticationPluginLogoutExtension {
-
+    
     private static final Log log = LogFactory.getLog(SAMLAuthenticationProvider.class);
-
+    
     // User Resolver
     private static final Class<? extends UserResolver> DEFAULT_USER_RESOLVER_CLASS = EmailBasedUserResolver.class;
-
+    
     // SAML Constants
     static final String SAML_SESSION_KEY = "SAML_SESSION";
-
+    
     // Supported SAML Bindings
     // TODO: Allow registering new bindings
     private static List<SAMLBinding> bindings = new ArrayList<>();
@@ -121,7 +121,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         bindings.add(new HTTPPostBinding());
         bindings.add(new HTTPRedirectBinding());
     }
-
+    
     // Decryption key resolver
     private static ChainingEncryptedKeyResolver encryptedKeyResolver = new ChainingEncryptedKeyResolver();
     static {
@@ -129,49 +129,49 @@ NuxeoAuthenticationPluginLogoutExtension {
         encryptedKeyResolver.getResolverChain().add(new EncryptedElementTypeEncryptedKeyResolver());
         encryptedKeyResolver.getResolverChain().add(new SimpleRetrievalMethodEncryptedKeyResolver());
     }
-
+    
     // Profiles supported by the IdP
     private Map<String, AbstractSAMLProfile> profiles = new HashMap<>();
-
+    
     private UserResolver userResolver;
-
+    
     private KeyManager keyManager;
-
+    
     private SignatureTrustEngine trustEngine;
-
+    
     private Decrypter decrypter;
-
+    
     private MetadataProvider metadataProvider;
-
+    
     @Override
     public void initPlugin(Map<String, String> parameters) {
-
+        
         // Initialize the User Resolver
         try {
             this.userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
         } catch (Exception e) {
             log.error("Failed to instantiate UserResolver", e);
         }
-
+        
         // Initialize the OpenSAML library
         try {
             DefaultBootstrap.bootstrap();
         } catch (ConfigurationException e) {
             log.error("Failed to bootstrap OpenSAML", e);
         }
-
+        
         // Read the IdP metadata and initialize the supported profiles
         try {
             // Read the IdP metadata
             this.initializeMetadataProvider(parameters);
-
+            
             // Setup Signature Trust Engine
             MetadataCredentialResolver metadataCredentialResolver =
                             new MetadataCredentialResolver(this.metadataProvider);
             this.trustEngine = new ExplicitKeySignatureTrustEngine(
                             metadataCredentialResolver,
                             org.opensaml.xml.Configuration.getGlobalSecurityConfiguration().getDefaultKeyInfoCredentialResolver());
-
+            
             // Setup decrypter
             Credential encryptionCredential = this.getKeyManager().getEncryptionCredential();
             if (encryptionCredential != null) {
@@ -180,17 +180,17 @@ NuxeoAuthenticationPluginLogoutExtension {
                 this.decrypter = new Decrypter(null, resolver, encryptedKeyResolver);
                 this.decrypter.setRootInNewDocument(true);
             }
-
+            
             // Process IdP roles
             for (RoleDescriptor roleDescriptor : this.getIdPDescriptor().getRoleDescriptors()) {
-
+                
                 // Web SSO role
                 if (roleDescriptor.getElementQName().equals(IDPSSODescriptor.DEFAULT_ELEMENT_NAME) &&
                                 roleDescriptor.isSupportedProtocol(
                                                 org.opensaml.common.xml.SAMLConstants.SAML20P_NS)) {
-
+                    
                     IDPSSODescriptor idpSSO = (IDPSSODescriptor) roleDescriptor;
-
+                    
                     // SSO
                     for (SingleSignOnService sso : idpSSO.getSingleSignOnServices()) {
                         if (sso.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI)) {
@@ -198,7 +198,7 @@ NuxeoAuthenticationPluginLogoutExtension {
                             break;
                         }
                     }
-
+                    
                     // SLO
                     for (SingleLogoutService slo : idpSSO.getSingleLogoutServices()) {
                         if (slo.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI)) {
@@ -207,15 +207,15 @@ NuxeoAuthenticationPluginLogoutExtension {
                         }
                     }
                 }
-
+                
                 // TODO: Allow registering new profiles
-
+                
             }
-
+            
         } catch (MetadataProviderException e) {
             log.warn("Failed to register IdP: " + e.getMessage());
         }
-
+        
         // contribute icon and link to the Login Screen
         if (parameters.containsKey("name")) {
             LoginScreenHelper.registerLoginProvider(
@@ -227,45 +227,45 @@ NuxeoAuthenticationPluginLogoutExtension {
                             this);
         }
     }
-
+    
     private void addProfile(AbstractSAMLProfile profile) {
         profile.setTrustEngine(this.trustEngine);
         profile.setDecrypter(this.decrypter);
         this.profiles.put(profile.getProfileIdentifier(), profile);
     }
-
+    
     private void initializeMetadataProvider(Map<String, String> parameters)
                     throws MetadataProviderException {
         AbstractMetadataProvider metadataProvider;
-
+        
         String metadataUrl = parameters.get("metadata");
         if (metadataUrl == null) {
             throw new MetadataProviderException(
                             "No metadata URI set for provider " +
                                             ((parameters.containsKey("name")) ? parameters.get("name") : ""));
         }
-
+        
         int requestTimeout = parameters.containsKey("timeout") ?
                         Integer.parseInt(parameters.get("timeout")) : 5;
-
+                        
                         if (metadataUrl.startsWith("http:") || metadataUrl.startsWith("https:")) {
                             metadataProvider = new HTTPMetadataProvider(metadataUrl,
                                             requestTimeout * 1000);
                         } else { // file
                             metadataProvider = new FilesystemMetadataProvider(new File(metadataUrl));
                         }
-
+                        
                         metadataProvider.setParserPool(new BasicParserPool());
                         metadataProvider.initialize();
-
+                        
                         this.metadataProvider = metadataProvider;
     }
-
+    
     private EntityDescriptor getIdPDescriptor()
                     throws MetadataProviderException {
         return (EntityDescriptor) this.metadataProvider.getMetadata();
     }
-
+    
     /**
      * Returns a Login URL to use with HTTP Redirect
      */
@@ -274,17 +274,17 @@ NuxeoAuthenticationPluginLogoutExtension {
         if (sso == null) {
             return null;
         }
-
+        
         // Create and populate the context
         SAMLMessageContext context = new BasicSAMLMessageContext();
         this.populateLocalContext(context);
-
+        
         // Store the requested URL in the Relay State
         String requestedUrl = this.getRequestedUrl(request);
         if (requestedUrl != null) {
             context.setRelayState(requestedUrl);
         }
-
+        
         // Get the encoded SAML request
         String encodedSaml = "";
         try {
@@ -293,8 +293,9 @@ NuxeoAuthenticationPluginLogoutExtension {
             //context.setOutboundSAMLMessage(authnRequest);
             //context.setPeerEntityEndpoint(sso.getEndpoint());
             // TODO(nfgs) : Allow using some other binding
-            //new HTTPRedirectDeflateEncoder().encode(context);
+            // new HTTPRedirectDeflateEncoder().encode(context);
 
+            
             Marshaller marshaller = Configuration.getMarshallerFactory()
                             .getMarshaller(authnRequest);
             if (marshaller == null) {
@@ -304,15 +305,24 @@ NuxeoAuthenticationPluginLogoutExtension {
             Element dom = marshaller.marshall(authnRequest);
             StringWriter buffer = new StringWriter();
             XMLHelper.writeNode(dom, buffer);
-            
+
             // TODO _ggu
             log.debug(">>>>>>>>>>>> SAML request");
-            String xmlWithoutHeader = buffer.toString().replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "");
+            log.debug("---------- XML -----------");
+            String xml = buffer.toString();
+            int indexOf = xml.indexOf("<saml2p:AuthnRequest");
+            String xmlWithoutHeader = xml.substring(indexOf);
             log.debug(xmlWithoutHeader);
+            
+            // log.debug("--------- DEFLATE --------");
+            byte[] compress = DeflateUtils.compress(xmlWithoutHeader.getBytes("UTF-8"));
+            // log.debug(new String(compress, "UTF-8"));
+            
+            log.debug("---------- Encode DEFLATE + BASE64 --------");
+            encodedSaml = Base64.encodeBase64String(compress);
+            log.debug(encodedSaml);
             log.debug("<<<<<<<<<<<< SAML request");
-            
-            encodedSaml = Base64.encodeBase64String(DeflateUtils.compress(xmlWithoutHeader.getBytes())); // .getBytes("UTF-8");
-            
+
         } catch (SAMLException e) {
             log.error("Failed to get SAML Auth request", e);
         } catch (MarshallingException e) {
@@ -320,7 +330,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         } catch (IOException e) {
             log.error("Failed to compress xml", e);
         }
-
+        
         String loginURL = sso.getEndpoint().getLocation();
         try {
             URLBuilder urlBuilder = new URLBuilder(loginURL);
@@ -333,7 +343,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         }
         return loginURL;
     }
-
+    
     private String getRequestedUrl(HttpServletRequest request) {
         String requestedUrl = (String) request.getAttribute(
                         NXAuthConstants.REQUESTED_URL);
@@ -346,18 +356,18 @@ NuxeoAuthenticationPluginLogoutExtension {
         }
         return requestedUrl;
     }
-
+    
     @Override
     public String computeUrl(HttpServletRequest request, String requestedUrl) {
         return this.getSSOUrl(request, null);
     }
-
+    
     @Override
     public Boolean handleLoginPrompt(HttpServletRequest request,
         HttpServletResponse response, String baseURL) {
-
+        
         String loginURL = this.getSSOUrl(request, response);
-
+        
         if (log.isDebugEnabled()) {
             log.debug("Send redirect to " + loginURL);
         }
@@ -371,30 +381,30 @@ NuxeoAuthenticationPluginLogoutExtension {
         }
         return true;
     }
-
+    
     // Retrieves user identification information from the request.
     @Override
     public UserIdentificationInfo handleRetrieveIdentity(
         HttpServletRequest request, HttpServletResponse response) {
-
+        
         HttpServletRequestAdapter inTransport = new HttpServletRequestAdapter(
                         request);
         SAMLBinding binding = this.getBinding(inTransport);
-
+        
         // Check if we support this binding
         if (binding == null) {
             return null;
         }
-
+        
         HttpServletResponseAdapter outTransport = new HttpServletResponseAdapter(
                         response, request.isSecure());
-
+        
         // Create and populate the context
         SAMLMessageContext context = new BasicSAMLMessageContext();
         context.setInboundMessageTransport(inTransport);
         context.setOutboundMessageTransport(outTransport);
         this.populateLocalContext(context);
-
+        
         // Decode the message
         try {
             binding.decode(context);
@@ -402,7 +412,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             log.error("Error during SAML decoding", e);
             return null;
         }
-
+        
         // Set Peer context info if needed
         try {
             if (context.getPeerEntityId() == null) {
@@ -418,7 +428,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         } catch (MetadataProviderException e) {
             //
         }
-
+        
         /* Tries to load peer SSL certificate from the inbound message transport using attribute
         X509Certificate[] chain = (X509Certificate[]) context.getInboundMessageTransport()
             .getAttribute(ServletRequestX509CredentialAdapter.X509_CERT_REQUEST_ATTRIBUTE);
@@ -432,22 +442,22 @@ NuxeoAuthenticationPluginLogoutExtension {
             context.setPeerSSLCredential(credential);
 
         }*/
-
+        
         // Check for a response processor for this profile
         AbstractSAMLProfile processor = this.getProcessor(context);
-
+        
         if (processor == null) {
             log.warn("Unsupported profile encountered in the context " +
                             context.getCommunicationProfileId());
             return null;
         }
-
+        
         // Set the communication profile
         context.setCommunicationProfileId(processor.getProfileIdentifier());
-
+        
         // Delegate handling the message to the processor
         SAMLObject message = context.getInboundSAMLMessage();
-
+        
         // Handle SLO
         // TODO - Try to handle IdP initiated SLO somewhere else
         if (processor instanceof SLOProfile) {
@@ -466,10 +476,10 @@ NuxeoAuthenticationPluginLogoutExtension {
             }
             return null;
         }
-
+        
         // Handle SSO
         SAMLCredential credential = null;
-
+        
         try {
             credential = ((WebSSOProfile) processor)
                             .processAuthenticationResponse(context);
@@ -477,15 +487,15 @@ NuxeoAuthenticationPluginLogoutExtension {
             log.debug("Error processing SAML message", e);
             return null;
         }
-
+        
         String userId = this.userResolver.findNuxeoUser(credential);
-
+        
         if (userId == null) {
             this.sendError(request, "No user found with email: \"" +
                             credential.getNameID().getValue() + "\".");
             return null;
         }
-
+        
         // Store session id in a cookie
         if ((credential.getSessionIndexes() != null) &&
                         !credential.getSessionIndexes().isEmpty()) {
@@ -495,10 +505,10 @@ NuxeoAuthenticationPluginLogoutExtension {
             this.addCookie(response, SAML_SESSION_KEY,
                             sessionId + "|" + nameValue + "|" + nameFormat);
         }
-
+        
         return new UserIdentificationInfo(userId, userId);
     }
-
+    
     protected AbstractSAMLProfile getProcessor(SAMLMessageContext context) {
         String profileId;
         SAMLObject message = context.getInboundSAMLMessage();
@@ -508,44 +518,44 @@ NuxeoAuthenticationPluginLogoutExtension {
         } else {
             profileId = WebSSOProfile.PROFILE_URI;
         }
-
+        
         return this.profiles.get(profileId);
     }
-
+    
     protected SAMLBinding getBinding(InTransport transport) {
-
+        
         for (SAMLBinding binding : bindings) {
             if (binding.supports(transport)) {
                 return binding;
             }
         }
-
+        
         return null;
-
+        
     }
-
+    
     private void populateLocalContext(SAMLMessageContext context) {
         // Set local info
         //context.setLocalEntityId(metadataProvider.getHostedSPName());
         context.setLocalEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-
+        
         // TODO - Generate SPSSO descriptor
         //context.setLocalEntityMetadata(entityDescriptor);
         //context.setLocalEntityRoleMetadata(roleDescriptor);
-
+        
         context.setMetadataProvider(this.metadataProvider);
     }
-
+    
     @Override
     public Boolean needLoginPrompt(HttpServletRequest httpRequest) {
         return true;
     }
-
+    
     @Override
     public List<String> getUnAuthenticatedURLPrefix() {
         return null;
     }
-
+    
     /**
      * Returns a Logout URL to use with HTTP Redirect
      */
@@ -554,15 +564,15 @@ NuxeoAuthenticationPluginLogoutExtension {
         if (slo == null) {
             return null;
         }
-
+        
         String logoutURL = slo.getEndpoint().getLocation();
-
+        
         SAMLCredential credential = this.getSamlCredential(request);
-
+        
         // Create and populate the context
         SAMLMessageContext context = new BasicSAMLMessageContext();
         this.populateLocalContext(context);
-
+        
         try {
             LogoutRequest logoutRequest = slo.buildLogoutRequest(context, credential);
             Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(
@@ -576,7 +586,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             XMLHelper.writeNode(dom, buffer);
             String encodedSaml = Base64.encodeBase64String(
                             buffer.toString().getBytes());
-
+            
             // Add the SAML as parameter
             URLBuilder urlBuilder = new URLBuilder(logoutURL);
             urlBuilder.getQueryParams().add(
@@ -587,13 +597,13 @@ NuxeoAuthenticationPluginLogoutExtension {
         } catch (MarshallingException e) {
             log.error("Encountered error marshalling message to its DOM representation", e);
         }
-
+        
         return logoutURL;
     }
-
+    
     private SAMLCredential getSamlCredential(HttpServletRequest request) {
         SAMLCredential credential = null;
-
+        
         // Retrieve the SAMLCredential credential from cookie
         Cookie cookie = this.getCookie(request, SAML_SESSION_KEY);
         if (cookie != null) {
@@ -601,35 +611,35 @@ NuxeoAuthenticationPluginLogoutExtension {
             String sessionId = parts[0];
             String nameValue = parts[1];
             String nameFormat = parts[2];
-
+            
             NameID nameID = (NameID) Configuration.getBuilderFactory()
                             .getBuilder(NameID.DEFAULT_ELEMENT_NAME)
                             .buildObject(NameID.DEFAULT_ELEMENT_NAME);
             nameID.setValue(nameValue);
             nameID.setFormat(nameFormat);
-
+            
             List<String> sessionIndexes = new ArrayList<>();
             sessionIndexes.add(sessionId);
-
+            
             credential = new SAMLCredential(nameID, sessionIndexes);
         }
-
+        
         return credential;
     }
-
+    
     @Override
     public Boolean handleLogout(HttpServletRequest request,
         HttpServletResponse response) {
         String logoutURL = this.getSLOUrl(request, response);
-
+        
         if (logoutURL == null) {
             return false;
         }
-
+        
         if (log.isDebugEnabled()) {
             log.debug("Send redirect to " + logoutURL);
         }
-
+        
         try {
             response.sendRedirect(logoutURL);
         } catch (IOException e) {
@@ -638,32 +648,32 @@ NuxeoAuthenticationPluginLogoutExtension {
             log.error(errorMessage, e);
             return false;
         }
-
+        
         Cookie cookie = this.getCookie(request, SAML_SESSION_KEY);
         if (cookie != null) {
             this.removeCookie(response, cookie);
         }
-
+        
         return true;
     }
-
+    
     private void sendError(HttpServletRequest req, String msg) {
         req.setAttribute(LOGIN_ERROR, msg);
     }
-
+    
     private KeyManager getKeyManager() {
         if (this.keyManager == null) {
             this.keyManager = Framework.getLocalService(KeyManager.class);
         }
         return this.keyManager;
     }
-
+    
     private void addCookie(HttpServletResponse httpResponse, String name,
         String value) {
         Cookie cookie = new Cookie(name, value);
         httpResponse.addCookie(cookie);
     }
-
+    
     private Cookie getCookie(HttpServletRequest httpRequest,
         String cookieName) {
         Cookie cookies[] = httpRequest.getCookies();
@@ -676,7 +686,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         }
         return null;
     }
-
+    
     private void removeCookie(HttpServletResponse httpResponse, Cookie cookie) {
         log.debug(String.format("Removing cookie %s.", cookie.getName()));
         cookie.setMaxAge(0);

@@ -86,28 +86,28 @@ cleanup = Granularity.METHOD)
 "org.nuxeo.ecm.platform.login.saml2" })
 @LocalDeploy("org.nuxeo.ecm.platform.auth.saml:OSGI-INF/test-sql-directory.xml")
 public class SAMLAuthenticatorTest {
-
+    
     @Inject
     protected UserManager userManager;
-
+    
     private DocumentModel user;
-
+    
     private SAMLAuthenticationProvider samlAuth;
-
+    
     @Before
     public void doBefore() throws URISyntaxException {
         this.samlAuth = new SAMLAuthenticationProvider();
-
+        
         String metadata = this.getClass().getResource("/idp-meta.xml").toURI().getPath();
-
+        
         Map<String, String> params = new ImmutableMap.Builder<String, String>() //
                         .put("metadata", metadata)
                         .build();
-
+        
         this.samlAuth.initPlugin(params);
-
+        
         this.user = this.userManager.getUserModel("user");
-
+        
         if (this.user == null) {
             this.user = this.userManager.getBareUserModel();
             this.user.setPropertyValue(this.userManager.getUserIdField(), "user");
@@ -115,67 +115,66 @@ public class SAMLAuthenticatorTest {
             this.user = this.userManager.createUser(this.user);
         }
     }
-
+    
     @Test
     public void testLoginPrompt() throws Exception {
-
+        
         HttpServletRequest req = mock(HttpServletRequest.class);
         HttpServletResponse resp = mock(HttpServletResponse.class);
         this.samlAuth.handleLoginPrompt(req, resp, "/");
-
+        
         verify(resp).sendRedirect(startsWith("http://dummy/SSORedirect"));
     }
-
+    
     @Test
     public void testAuthRequest() throws Exception {
-
+        
         HttpServletRequest req = mock(HttpServletRequest.class);
         HttpServletResponse resp = mock(HttpServletResponse.class);
-
+        
         String loginURL = this.samlAuth.getSSOUrl(req, resp);
         String query = URI.create(loginURL).getQuery();
-
+        
         assertTrue(loginURL.startsWith("http://dummy/SSORedirect"));
         assertTrue(query.startsWith(HTTPRedirectBinding.SAML_REQUEST));
 
-        String samlRequest = query.replaceFirst(
-                        HTTPRedirectBinding.SAML_REQUEST + "=", "");
+        String samlRequest = query.replaceFirst(HTTPRedirectBinding.SAML_REQUEST + "=", "");
 
         SAMLObject message = this.decodeMessage(samlRequest);
-
+        
         // Validate type
         assertTrue(message instanceof AuthnRequest);
-
+        
         AuthnRequest auth = (AuthnRequest) message;
         assertEquals(SAMLVersion.VERSION_20, auth.getVersion());
         assertNotNull(auth.getID());
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI,
                         auth.getProtocolBinding());
     }
-
+    
     @Test
     public void testRetrieveIdentity() throws Exception {
-
+        
         HttpServletRequest req = this.getMockRequest("/saml-response.xml", "POST",
                         "http://localhost:8080/login", "text/html");
-
+        
         HttpServletResponse resp = mock(HttpServletResponse.class);
-
+        
         UserIdentificationInfo info = this.samlAuth.handleRetrieveIdentity(req, resp);
         assertEquals(info.getUserName(), this.user.getId());
-
+        
         final ArgumentCaptor<Cookie> captor = ArgumentCaptor.forClass(Cookie.class);
-
+        
         verify(resp).addCookie(captor.capture());
-
+        
         final List<Cookie> cookies = captor.getAllValues();
-
+        
         assertTrue(!cookies.isEmpty());
     }
-
+    
     @Test
     public void testLogoutRequest() throws Exception {
-
+        
         HttpServletRequest req = mock(HttpServletRequest.class);
         HttpServletResponse resp = mock(HttpServletResponse.class);
         Cookie[] cookies = new Cookie[] {
@@ -184,10 +183,10 @@ public class SAMLAuthenticatorTest {
         };
         when(req.getCookies()).thenReturn(cookies);
         String logoutURL = this.samlAuth.getSLOUrl(req, resp);
-
+        
         assertTrue(logoutURL.startsWith("http://dummy/SLORedirect"));
     }
-
+    
     protected HttpServletRequest getMockRequest(String messageFile,
         String method, String url, String contentType) throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -209,7 +208,7 @@ public class SAMLAuthenticatorTest {
         //when(request.getAttribute(SAMLConstants.LOCAL_ENTITY_ID)).thenReturn(null);
         return request;
     }
-
+    
     protected SAMLObject decodeMessage(String message) throws IOException, DataFormatException {
         try {
             byte[] decodedBytes = Base64.decode(message);
@@ -217,15 +216,15 @@ public class SAMLAuthenticatorTest {
                 throw new MessageDecodingException(
                                 "Unable to Base64 decode incoming message");
             }
-
+            
             InputStream is = new ByteArrayInputStream(DeflateUtils.decompress(decodedBytes));
-
+            
             Document messageDoc = new BasicParserPool().parse(is);
             Element messageElem = messageDoc.getDocumentElement();
-
+            
             Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory()
                             .getUnmarshaller(messageElem);
-
+            
             return (SAMLObject) unmarshaller.unmarshall(messageElem);
         } catch (MessageDecodingException | XMLParserException | UnmarshallingException e) {
             //
