@@ -387,6 +387,10 @@ NuxeoAuthenticationPluginLogoutExtension {
     public UserIdentificationInfo handleRetrieveIdentity(
         HttpServletRequest request, HttpServletResponse response) {
         
+        log.debug("request.getScheme() => " + request.getScheme());
+        log.debug("request.getRequestURL() => " + request.getRequestURL());
+
+        
         HttpServletRequestAdapter inTransport = new HttpServletRequestAdapter(
                         request);
         SAMLBinding binding = this.getBinding(inTransport);

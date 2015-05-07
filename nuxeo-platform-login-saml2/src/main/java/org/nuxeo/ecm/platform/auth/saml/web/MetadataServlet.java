@@ -109,7 +109,8 @@ public class MetadataServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response)
                     throws IOException {
 
-        this.entityBaseURL = VirtualHostHelper.getBaseURL(request) + '/' +
+        String baseURL = VirtualHostHelper.getBaseURL(request);
+        this.entityBaseURL = baseURL + (baseURL.endsWith("/") ? "" : "/") +
                         NuxeoAuthenticationFilter.DEFAULT_START_PAGE;
         /*
         id = entityId.replaceAll("[^a-zA-Z0-9-_.]", "_");
