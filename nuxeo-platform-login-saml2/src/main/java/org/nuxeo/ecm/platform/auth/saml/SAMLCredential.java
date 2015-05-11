@@ -17,11 +17,11 @@
 
 package org.nuxeo.ecm.platform.auth.saml;
 
-import org.opensaml.saml2.core.Attribute;
-import org.opensaml.saml2.core.NameID;
-
 import java.io.Serializable;
 import java.util.List;
+
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.NameID;
 
 /**
  *
@@ -35,12 +35,12 @@ public class SAMLCredential {
     private List<Attribute> attributes;
     private String localEntityID;
     private Serializable additionalData;
-
+    
     public SAMLCredential(NameID nameID, List<String> sessionIndexes) {
         this.nameID = nameID;
         this.sessionIndexes = sessionIndexes;
     }
-
+    
     public SAMLCredential(NameID nameID, List<String> sessionIndexes, String remoteEntityID, String relayState, List<Attribute> attributes, String localEntityID, Serializable additionalData) {
         this.nameID = nameID;
         this.sessionIndexes = sessionIndexes;
@@ -50,41 +50,48 @@ public class SAMLCredential {
         this.localEntityID = localEntityID;
         this.additionalData = additionalData;
     }
-
+    
+    @Override
+    public String toString() {
+        return "SAMLCredential [nameID=" + this.nameID + ", sessionIndexes=" + this.sessionIndexes + ", remoteEntityID=" + this.remoteEntityID
+                        + ", relayState=" + this.relayState + ", attributes=" + this.attributes + ", localEntityID=" + this.localEntityID
+                        + ", additionalData=" + this.additionalData + "]";
+    }
+    
     public NameID getNameID() {
-        return nameID;
+        return this.nameID;
     }
-
+    
     public List<String> getSessionIndexes() {
-        return sessionIndexes;
+        return this.sessionIndexes;
     }
-
+    
     public String getRemoteEntityID() {
-        return remoteEntityID;
+        return this.remoteEntityID;
     }
-
+    
     public Attribute getAttributeByName(String name) {
-        for (Attribute attribute : getAttributes()) {
+        for (Attribute attribute : this.getAttributes()) {
             if (name.equalsIgnoreCase(attribute.getName())) {
                 return attribute;
             }
         }
         return null;
     }
-
+    
     public List<Attribute> getAttributes() {
-        return attributes;
+        return this.attributes;
     }
-
+    
     public String getRelayState() {
-        return relayState;
+        return this.relayState;
     }
-
+    
     public String getLocalEntityID() {
-        return localEntityID;
+        return this.localEntityID;
     }
-
+    
     public Serializable getAdditionalData() {
-        return additionalData;
+        return this.additionalData;
     }
 }

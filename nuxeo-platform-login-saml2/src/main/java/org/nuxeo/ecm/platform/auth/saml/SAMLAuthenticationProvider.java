@@ -395,6 +395,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         
         // Check if we support this binding
         if (binding == null) {
+            log.warn("SAMLBinding null");
             return null;
         }
         
@@ -498,7 +499,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         String userId = this.userResolver.findNuxeoUser(credential);
         
         log.debug("userId : " + userId);
-
+        
         if (userId == null) {
             this.sendError(request, "No user found with email: \"" +
                             credential.getNameID().getValue() + "\".");

@@ -16,6 +16,10 @@
  */
 package org.nuxeo.ecm.platform.auth.saml.user;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.core.api.ClientException;
@@ -25,55 +29,53 @@ import org.nuxeo.ecm.platform.auth.saml.SAMLCredential;
 import org.nuxeo.ecm.platform.usermanager.UserManager;
 import org.nuxeo.runtime.api.Framework;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
 public class EmailBasedUserResolver extends UserResolver {
-
+    
     private static final Log log = LogFactory.getLog(
-            EmailBasedUserResolver.class);
-
+                    EmailBasedUserResolver.class);
+    
     @Override
     public String findNuxeoUser(SAMLCredential credential) {
+        
+        log.debug("credential.getNameID().getValue() : " + credential.getNameID().getValue());
 
         try {
             UserManager userManager = Framework.getLocalService(
-                    UserManager.class);
+                            UserManager.class);
             Map<String, Serializable> query = new HashMap<>();
             query.put(userManager.getUserEmailField(),
-                    credential.getNameID().getValue());
-
+                            credential.getNameID().getValue());
+            
             DocumentModelList users = userManager.searchUsers(query, null);
-
+            
             if (users.isEmpty()) {
                 return null;
             }
-
+            
             DocumentModel user = users.get(0);
             return (String) user.getPropertyValue(userManager.getUserIdField());
-
+            
         } catch (ClientException e) {
             log.error("Error while search user in UserManager using email "
-                    + credential.getNameID().getValue(), e);
+                            + credential.getNameID().getValue(), e);
             return null;
         }
     }
-
+    
     @Override
     public DocumentModel updateUserInfo(DocumentModel user,
-            SAMLCredential credential) {
+        SAMLCredential credential) {
         try {
             UserManager userManager = Framework.getLocalService(
-                    UserManager.class);
+                            UserManager.class);
             user.setPropertyValue(userManager.getUserEmailField(),
-                    credential.getNameID().getValue());
+                            credential.getNameID().getValue());
         } catch (ClientException e) {
             log.error("Error while search user in UserManager using email "
-                    + credential.getNameID().getValue(), e);
+                            + credential.getNameID().getValue(), e);
             return null;
         }
         return user;
     }
-
+    
 }
