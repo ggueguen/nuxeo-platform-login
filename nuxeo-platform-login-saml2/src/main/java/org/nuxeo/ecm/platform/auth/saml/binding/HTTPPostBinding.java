@@ -16,8 +16,8 @@
  */
 package org.nuxeo.ecm.platform.auth.saml.binding;
 
+import org.nuxeo.ecm.platform.auth.saml.decoding.HTTPPostDecoderRP;
 import org.opensaml.common.xml.SAMLConstants;
-import org.opensaml.saml2.binding.decoding.HTTPPostDecoder;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.OutTransport;
 import org.opensaml.ws.transport.http.HTTPInTransport;
@@ -30,30 +30,33 @@ import org.opensaml.ws.transport.http.HTTPTransport;
  * @since 6.0
  */
 public class HTTPPostBinding extends SAMLBinding {
-
+    
     public static final String SAML_REQUEST = "SAMLRequest";
-
+    
     public static final String SAML_RESPONSE = "SAMLResponse";
-
+    
     public HTTPPostBinding() {
-        super(new HTTPPostDecoder(), null);// TODO(nfgs): add HTTPPostEncoder
+        super(new HTTPPostDecoderRP(), null);// TODO(nfgs): add HTTPPostEncoder
     }
-
+    
+    @Override
     public boolean supports(InTransport transport) {
         if (transport instanceof HTTPInTransport) {
             HTTPTransport t = (HTTPTransport) transport;
             return "POST".equalsIgnoreCase(t.getHTTPMethod()) &&
-                    (t.getParameterValue(SAML_REQUEST) != null ||
-                            t.getParameterValue(SAML_RESPONSE) != null);
+                            ((t.getParameterValue(SAML_REQUEST) != null) ||
+                                            (t.getParameterValue(SAML_RESPONSE) != null));
         } else {
             return false;
         }
     }
-
+    
+    @Override
     public boolean supports(OutTransport transport) {
         return transport instanceof HTTPOutTransport;
     }
-
+    
+    @Override
     public String getBindingURI() {
         return SAMLConstants.SAML2_POST_BINDING_URI;
     }

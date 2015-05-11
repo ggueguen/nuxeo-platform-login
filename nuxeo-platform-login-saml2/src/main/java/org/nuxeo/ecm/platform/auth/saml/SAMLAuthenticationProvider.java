@@ -294,7 +294,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             //context.setPeerEntityEndpoint(sso.getEndpoint());
             // TODO(nfgs) : Allow using some other binding
             // new HTTPRedirectDeflateEncoder().encode(context);
-
+            
             
             Marshaller marshaller = Configuration.getMarshallerFactory()
                             .getMarshaller(authnRequest);
@@ -305,7 +305,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             Element dom = marshaller.marshall(authnRequest);
             StringWriter buffer = new StringWriter();
             XMLHelper.writeNode(dom, buffer);
-
+            
             // TODO _ggu
             log.debug(">>>>>>>>>>>> SAML request");
             log.debug("---------- XML -----------");
@@ -322,7 +322,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             encodedSaml = Base64.encodeBase64String(compress);
             log.debug(encodedSaml);
             log.debug("<<<<<<<<<<<< SAML request");
-
+            
         } catch (SAMLException e) {
             log.error("Failed to get SAML Auth request", e);
         } catch (MarshallingException e) {
@@ -389,7 +389,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         
         log.debug("request.getScheme() => " + request.getScheme());
         log.debug("request.getRequestURL() => " + request.getRequestURL());
-
+        
         
         HttpServletRequestAdapter inTransport = new HttpServletRequestAdapter(
                         request);
