@@ -67,7 +67,7 @@ import org.opensaml.xml.validation.ValidationException;
 public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProfile {
     
     private static final Log log = LogFactory.getLog(WebSSOProfileImpl.class);
-
+    
     public WebSSOProfileImpl(SingleSignOnService sso) {
         super(sso);
     }
@@ -233,10 +233,10 @@ public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProf
         request.setAssertionConsumerServiceURL(this.getStartPageURL(httpRequest));
         
         Issuer issuer = this.build(Issuer.DEFAULT_ELEMENT_NAME);
-
+        
         // TODO _ggu
         String entityId = Framework.getProperty("pe.web.sso.entityId");
-        log.debug("====> entityId : " + entityId);
+        // log.debug("====> entityId : " + entityId);
         // issuer.setValue(this.getBaseURL(httpRequest));
         issuer.setValue(entityId);
         request.setIssuer(issuer);

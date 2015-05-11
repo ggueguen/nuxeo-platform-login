@@ -387,9 +387,7 @@ NuxeoAuthenticationPluginLogoutExtension {
     public UserIdentificationInfo handleRetrieveIdentity(
         HttpServletRequest request, HttpServletResponse response) {
         
-        log.debug("request.getScheme() => " + request.getScheme());
-        log.debug("request.getRequestURL() => " + request.getRequestURL());
-        
+        log.debug(">>>>>> handleRetrieveIdentity");
         
         HttpServletRequestAdapter inTransport = new HttpServletRequestAdapter(
                         request);
@@ -417,6 +415,8 @@ NuxeoAuthenticationPluginLogoutExtension {
             return null;
         }
         
+        log.debug("SAMLMessageContext decoding ok");
+        
         // Set Peer context info if needed
         try {
             if (context.getPeerEntityId() == null) {
@@ -426,8 +426,7 @@ NuxeoAuthenticationPluginLogoutExtension {
                 context.setPeerEntityMetadata(this.getIdPDescriptor());
             }
             if (context.getPeerEntityRole() == null) {
-                context.setPeerEntityRole(
-                                IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                context.setPeerEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
             }
         } catch (MetadataProviderException e) {
             //
@@ -456,6 +455,8 @@ NuxeoAuthenticationPluginLogoutExtension {
             return null;
         }
         
+        log.debug("AbstractSAMLProfile find : " + processor.getProfileIdentifier());
+        
         // Set the communication profile
         context.setCommunicationProfileId(processor.getProfileIdentifier());
         
@@ -478,6 +479,7 @@ NuxeoAuthenticationPluginLogoutExtension {
             } catch (Exception e) {
                 log.debug("Error processing SAML message", e);
             }
+            log.debug("SLO return null");
             return null;
         }
         
@@ -485,15 +487,18 @@ NuxeoAuthenticationPluginLogoutExtension {
         SAMLCredential credential = null;
         
         try {
-            credential = ((WebSSOProfile) processor)
-                            .processAuthenticationResponse(context);
+            credential = ((WebSSOProfile) processor).processAuthenticationResponse(context);
         } catch (Exception e) {
             log.debug("Error processing SAML message", e);
             return null;
         }
         
+        log.debug("SAMLCredential : " + credential);
+        
         String userId = this.userResolver.findNuxeoUser(credential);
         
+        log.debug("userId : " + userId);
+
         if (userId == null) {
             this.sendError(request, "No user found with email: \"" +
                             credential.getNameID().getValue() + "\".");
@@ -509,6 +514,8 @@ NuxeoAuthenticationPluginLogoutExtension {
             this.addCookie(response, SAML_SESSION_KEY,
                             sessionId + "|" + nameValue + "|" + nameFormat);
         }
+        
+        log.debug("<<<<<< handleRetrieveIdentity");
         
         return new UserIdentificationInfo(userId, userId);
     }
