@@ -6,10 +6,6 @@
             <servlet-class>
                 org.nuxeo.ecm.platform.auth.saml.web.MetadataServlet
             </servlet-class>
-            <init-param>
-				<param-name>entityId</param-name>
-				<param-value>${pe.web.sso.entityId}</param-value>
-			</init-param>
         </servlet>
         <servlet-mapping>
             <servlet-name>Nuxeo SAML2 metadata servlet</servlet-name>

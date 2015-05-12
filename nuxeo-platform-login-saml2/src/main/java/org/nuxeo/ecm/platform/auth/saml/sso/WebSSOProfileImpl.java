@@ -235,7 +235,7 @@ public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProf
         Issuer issuer = this.build(Issuer.DEFAULT_ELEMENT_NAME);
         
         // TODO _ggu
-        String entityId = Framework.getProperty("pe.web.sso.entityId");
+        String entityId = Framework.getProperty("saml2.metadata.entityId");
         // log.debug("====> entityId : " + entityId);
         // issuer.setValue(this.getBaseURL(httpRequest));
         issuer.setValue(entityId);

@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -89,13 +88,7 @@ public class MetadataServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         this.builderFactory = Configuration.getBuilderFactory();
-    }
-
-    @Override
-    public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-        this.entityId = config.getInitParameter("entityId");
-        log.info(">>>> entityId = " + this.entityId);
+        this.entityId = Framework.getProperty("saml2.metadata.entityId", "nuxeo");
     }
 
     private KeyManager getKeyManager() {
@@ -112,11 +105,6 @@ public class MetadataServlet extends HttpServlet {
         String baseURL = VirtualHostHelper.getBaseURL(request);
         this.entityBaseURL = baseURL + (baseURL.endsWith("/") ? "" : "/") +
                         NuxeoAuthenticationFilter.DEFAULT_START_PAGE;
-        /*
-        id = entityId.replaceAll("[^a-zA-Z0-9-_.]", "_");
-        if (id.startsWith("-")) {
-            id = "_" + id.substring(1);
-        }*/
 
         EntityDescriptor descriptor = this.buildEntityDescriptor();
 
