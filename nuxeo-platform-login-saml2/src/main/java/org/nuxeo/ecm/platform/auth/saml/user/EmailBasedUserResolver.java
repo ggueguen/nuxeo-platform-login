@@ -37,14 +37,15 @@ public class EmailBasedUserResolver extends UserResolver {
     @Override
     public String findNuxeoUser(SAMLCredential credential) {
         
-        log.debug("credential.getNameID().getValue() : " + credential.getNameID().getValue());
+        String email = getEmailFromCredential(credential);
+        log.debug(">>>Mail : " + email);
 
         try {
             UserManager userManager = Framework.getLocalService(
                             UserManager.class);
             Map<String, Serializable> query = new HashMap<>();
             query.put(userManager.getUserEmailField(),
-                            credential.getNameID().getValue());
+                            email);
             
             DocumentModelList users = userManager.searchUsers(query, null);
             
@@ -57,9 +58,13 @@ public class EmailBasedUserResolver extends UserResolver {
             
         } catch (ClientException e) {
             log.error("Error while search user in UserManager using email "
-                            + credential.getNameID().getValue(), e);
+                            + email, e);
             return null;
         }
+    }
+    
+    protected String getEmailFromCredential(SAMLCredential credential){
+        return credential.getNameID().getValue();
     }
     
     @Override

@@ -13,8 +13,11 @@
  *
  * Contributors:
  *     Nelson Silva <nelson.silva@inevo.pt>
+ *     Gildas Gueguen <gildas.gueguen@gmail.com>
  */
 package org.nuxeo.ecm.platform.auth.saml.user;
+
+import java.util.List;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.logging.Log;
@@ -24,8 +27,6 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.platform.auth.saml.SAMLCredential;
 import org.nuxeo.ecm.platform.usermanager.UserManager;
 import org.nuxeo.runtime.api.Framework;
-
-import java.util.List;
 
 public abstract class UserResolver {
 

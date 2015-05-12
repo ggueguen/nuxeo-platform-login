@@ -1,0 +1,69 @@
+<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+	Destination="https://colibri-b-dev.sii24.pole-emploi.intra:9680/nuxeo/nxstartup.faces"
+	ID="id-SlzizzWgFDNgViiEpu-abpUlJZU-" InResponseTo="01c2bdb3-2309-4c1f-a150-42373b15f684"
+	IssueInstant="2015-05-12T09:15:05Z" Version="2.0">
+	<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+		Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">IDP_POLE-EMPLOI_IQL</saml:Issuer>
+	<samlp:Status>
+		<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success" />
+	</samlp:Status>
+	<saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+		ID="id-OPpqmXmhtyF70tdz3VdwtvKU9ic-" IssueInstant="2015-05-12T09:15:05Z"
+		Version="2.0">
+		<saml:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">IDP_POLE-EMPLOI_IQL</saml:Issuer>
+		<!-- dsig:Signature xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+			<dsig:SignedInfo>
+				<dsig:CanonicalizationMethod
+					Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+				<dsig:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+				<dsig:Reference URI="#id-OPpqmXmhtyF70tdz3VdwtvKU9ic-">
+					<dsig:Transforms>
+						<dsig:Transform
+							Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+						<dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+					</dsig:Transforms>
+					<dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+					<dsig:DigestValue>alIlVI9HY4Gfk4cWIlf1PaDzggY=</dsig:DigestValue>
+				</dsig:Reference>
+			</dsig:SignedInfo>
+			<dsig:SignatureValue>PBWIpqpQOAudCqrZZ6tSyRHiAMqlNOdM1XD31CFUx4KHukd6l8bXVSzhg/SUO4od8WFODHQykzc3gUfIgcmyOJgOq30VLJIdnytJo1K2y6Qkr0znKR5tXRJ14vVm3EaDn73+RwSHIZg7Sk+/YM9a7xQNaWGazGYnJvz7TONz6ITppoOfPZ0nd0bxJcdsPGw8mMj57sGQyNGGdOEyU/Q1u3v0Ftyux4PdiKHiFk0SUK9rcJatMMcxV/n070McbqwLqaSClHm65/Wdvj8gBGPzTNkizXXLKa8yilAhFHm/NvJRm/kLHWkjHbHeXnKtQJR7XSCi5fhNnnxaMZCyBuSdlg==</dsig:SignatureValue>
+		</dsig:Signature-->
+		<saml:Subject>
+			<saml:NameID Format="urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
+				NameQualifier="IDP_POLE-EMPLOI_IQL" SPNameQualifier="SP_NUXEO_TU">id-3Mf79d-4ONRPMLRNh9g2uznQCvo-</saml:NameID>
+			<saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
+				<saml:SubjectConfirmationData
+					InResponseTo="01c2bdb3-2309-4c1f-a150-42373b15f684" NotOnOrAfter="2020-05-12T09:20:05Z"
+					Recipient="https://colibri-b-dev.sii24.pole-emploi.intra:9680/nuxeo/nxstartup.faces" />
+			</saml:SubjectConfirmation>
+		</saml:Subject>
+		<saml:Conditions NotBefore="2015-05-12T09:15:05Z"
+			NotOnOrAfter="2020-05-12T09:20:05Z">
+			<saml:AudienceRestriction>
+				<saml:Audience>SP_NUXEO_TU</saml:Audience>
+			</saml:AudienceRestriction>
+		</saml:Conditions>
+		<saml:AuthnStatement AuthnInstant="2015-05-12T09:14:56Z"
+			SessionIndex="id-0lVb91MiXR--7ka2szCEeRZ8tVQ-" SessionNotOnOrAfter="2020-05-12T10:15:05Z">
+			<saml:AuthnContext>
+				<saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef>
+			</saml:AuthnContext>
+		</saml:AuthnStatement>
+		<saml:AttributeStatement
+			xmlns:x500="urn:oasis:names:tc:SAML:2.0:profiles:attribute:X500"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+			<saml:Attribute Name="uid"
+				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
+				<saml:AttributeValue xsi:type="xs:string">USERDUMMY</saml:AttributeValue>
+			</saml:Attribute>
+			<saml:Attribute Name="mail"
+				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
+				<saml:AttributeValue xsi:type="xs:string">user@dummy.com</saml:AttributeValue>
+			</saml:Attribute>
+			<saml:Attribute Name="employeeid"
+				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
+				<saml:AttributeValue xsi:type="xs:string">USERDUMMY</saml:AttributeValue>
+			</saml:Attribute>
+		</saml:AttributeStatement>
+	</saml:Assertion>
+</samlp:Response>
