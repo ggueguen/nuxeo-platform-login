@@ -135,9 +135,7 @@ public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProf
                 log.debug("Decrypting assertion");
                 assertions.add(this.getDecrypter().decrypt(ea));
             } catch (DecryptionException e) {
-                log.debug(
-                                "Decryption of received assertion failed, assertion will be skipped",
-                                e);
+                log.debug("Decryption of received assertion failed, assertion will be skipped", e);
             }
         }
         
@@ -159,9 +157,7 @@ public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProf
                     }
                     
                 } catch (Exception e) {
-                    log.debug(
-                                    "Validation of received assertion failed, assertion will be skipped",
-                                    e);
+                    log.debug("Validation of received assertion failed, assertion will be skipped", e);
                     continue;
                 }
             }
@@ -188,8 +184,7 @@ public class WebSSOProfileImpl extends AbstractSAMLProfile implements WebSSOProf
         
         // Make sure that at least one storage contains authentication statement and subject with bearer confirmation
         if (subject == null) {
-            log.debug(
-                            "Response doesn't have any valid assertion which would pass subject validation");
+            log.debug("Response doesn't have any valid assertion which would pass subject validation");
             throw new SAMLException("Error validating SAML response");
         }
         

@@ -149,7 +149,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         
         // Initialize the User Resolver
         try {
-            this.userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
+          //  this.userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
             this.userResolver = new EmailOIFUserResolver();
         } catch (Exception e) {
             log.error("Failed to instantiate UserResolver", e);
@@ -514,8 +514,10 @@ NuxeoAuthenticationPluginLogoutExtension {
             String nameValue = credential.getNameID().getValue();
             String nameFormat = credential.getNameID().getFormat();
             String sessionId = credential.getSessionIndexes().get(0);
+            String value = sessionId + "|" + nameValue + "|" + nameFormat;
             this.addCookie(response, SAML_SESSION_KEY,
-                            sessionId + "|" + nameValue + "|" + nameFormat);
+                            value);
+            System.out.println(value);
         }
         
         log.debug("<<<<<< handleRetrieveIdentity");
