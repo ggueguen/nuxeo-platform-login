@@ -44,7 +44,7 @@
 
         <saml:Subject>
             <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-                         NameQualifier="http://dummy">user@dummy
+                         NameQualifier="http://dummy">user@dummy.com
             </saml:NameID>
             <saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">
                 <saml:SubjectConfirmationData InResponseTo="a5947jig4cb55ii746a2963a67bf65"

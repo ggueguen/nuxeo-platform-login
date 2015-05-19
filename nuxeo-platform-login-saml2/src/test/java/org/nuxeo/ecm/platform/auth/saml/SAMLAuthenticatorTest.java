@@ -19,12 +19,26 @@ package org.nuxeo.ecm.platform.auth.saml;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.startsWith;
 
-import com.google.common.collect.ImmutableMap;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+
+import javax.inject.Inject;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +59,6 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.test.runner.LocalDeploy;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLVersion;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.xml.Configuration;
@@ -57,21 +70,7 @@ import org.opensaml.xml.util.Base64;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.inject.Inject;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
+import com.google.common.collect.ImmutableMap;
 
 @RunWith(FeaturesRunner.class)
 @Features(CoreFeature.class)
@@ -105,7 +104,7 @@ public class SAMLAuthenticatorTest {
         if (user == null) {
             user = userManager.getBareUserModel();
             user.setPropertyValue(userManager.getUserIdField(), "user");
-            user.setPropertyValue(userManager.getUserEmailField(), "user@dummy");
+            user.setPropertyValue(userManager.getUserEmailField(), "user@dummy.com");
             user = userManager.createUser(user);
         }
     }
@@ -161,6 +160,35 @@ public class SAMLAuthenticatorTest {
 
         final List<Cookie> cookies = captor.getAllValues();
 
+        assertTrue(!cookies.isEmpty());
+    }
+    
+    @Test
+    public void testRetrieveIdentityOIF() throws Exception {
+        
+        String metadata = this.getClass().getResource("/idp-metadata-oif.xml").toURI().getPath();
+        Map<String, String> params = new ImmutableMap.Builder<String, String>() //
+                        .put("metadata", metadata)
+                        .put("userResolverClass", "org.nuxeo.ecm.platform.auth.saml.user.AttributeUserResolver")
+                        .build();
+        
+        this.samlAuth.initPlugin(params);
+
+        HttpServletRequest req = this.getMockRequest("/saml-response-attribute.xml", "POST",
+                        "http://colibri-b-dev.sii24.pole-emploi.intra:9680/nuxeo/nxstartup.faces",
+                        "text/html");
+        
+        HttpServletResponse resp = mock(HttpServletResponse.class);
+        
+        UserIdentificationInfo info = this.samlAuth.handleRetrieveIdentity(req, resp);
+        assertEquals(info.getUserName(), this.user.getId());
+        
+        final ArgumentCaptor<Cookie> captor = ArgumentCaptor.forClass(Cookie.class);
+        
+        verify(resp).addCookie(captor.capture());
+        
+        final List<Cookie> cookies = captor.getAllValues();
+        
         assertTrue(!cookies.isEmpty());
     }
 

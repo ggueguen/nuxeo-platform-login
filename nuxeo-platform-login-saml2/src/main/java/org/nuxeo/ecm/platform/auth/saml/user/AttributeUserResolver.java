@@ -26,12 +26,16 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
 
     private static final Log log = LogFactory.getLog(AttributeUserResolver.class);
 
+    public static final String IDENTIFICATOR_ATTRIBUTE = "nuxeo.saml2.identificator.attribute";
+
+    public static final String USER_MANAGER_FIELD = "nuxeo.saml2.userManagerField";
+    
     public static String getIdentificatorAttribute() {
-        return Framework.getProperty("nuxeo.saml2.identificator.attribute"); // employeeid mail
+        return Framework.getProperty(IDENTIFICATOR_ATTRIBUTE, "mail"); // mail employeeid 
     }
     
     public static String getUserManagerField() {
-        return Framework.getProperty("nuxeo.saml2.userManagerField"); // getUserEmailField
+        return Framework.getProperty(USER_MANAGER_FIELD, "getUserEmailField" ); // getUserEmailField getUserIdField
     }
     
     
@@ -65,8 +69,6 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
                 break;
             }
         }
-        
-        log.debug(">>> " + identificator + " : " + value);
         return value;
     }
     
@@ -77,12 +79,10 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
             Method method = userManager.getClass().getMethod(getUserManagerField());
             Object invoke = method.invoke(userManager);
             log.debug(">>> getIdentificatorUserField "  + getUserManagerField() +" : " + invoke);
-                value = (String)invoke;
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException | SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            value = (String)invoke;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            log.error("Error while search user in UserManager using " + getUserManagerField() + " " + value, e);
+            return null;
         }
         
     //    return userManager.getUserEmailField();
@@ -93,11 +93,13 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
     public String findNuxeoUser(SAMLCredential credential) {
         
         String value = getValueFromCredential(credential);
-
+        String identificatorUserField = null;
+        
         try {
             UserManager userManager = Framework.getLocalService(UserManager.class);
             Map<String, Serializable> query = new HashMap<>();
-            query.put(getIdentificatorUserField(userManager), value);
+            identificatorUserField = getIdentificatorUserField(userManager);
+            query.put(identificatorUserField, value);
             
             DocumentModelList users = userManager.searchUsers(query, null);
             
@@ -106,12 +108,10 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
             }
             
             DocumentModel user = users.get(0);
-            log.debug("userManager.getUserIdField() : " + userManager.getUserIdField());
             return (String) user.getPropertyValue(userManager.getUserIdField());
             
         } catch (ClientException e) {
-            log.error("Error while search user in UserManager using email "
-                            + value, e);
+            log.error("Error while search user in UserManager using " + identificatorUserField + value, e);
             return null;
         }
     }
