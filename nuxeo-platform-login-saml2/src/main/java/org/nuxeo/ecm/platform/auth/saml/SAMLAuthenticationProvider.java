@@ -43,8 +43,8 @@ import org.nuxeo.ecm.platform.auth.saml.slo.SLOProfile;
 import org.nuxeo.ecm.platform.auth.saml.slo.SLOProfileImpl;
 import org.nuxeo.ecm.platform.auth.saml.sso.WebSSOProfile;
 import org.nuxeo.ecm.platform.auth.saml.sso.WebSSOProfileImpl;
+import org.nuxeo.ecm.platform.auth.saml.user.AttributeUserResolver;
 import org.nuxeo.ecm.platform.auth.saml.user.EmailBasedUserResolver;
-import org.nuxeo.ecm.platform.auth.saml.user.EmailOIFUserResolver;
 import org.nuxeo.ecm.platform.auth.saml.user.UserResolver;
 import org.nuxeo.ecm.platform.auth.saml.utils.DeflateUtils;
 import org.nuxeo.ecm.platform.ui.web.auth.LoginScreenHelper;
@@ -150,7 +150,7 @@ NuxeoAuthenticationPluginLogoutExtension {
         // Initialize the User Resolver
         try {
           //  this.userResolver = DEFAULT_USER_RESOLVER_CLASS.newInstance();
-            this.userResolver = new EmailOIFUserResolver();
+            this.userResolver = new AttributeUserResolver();
         } catch (Exception e) {
             log.error("Failed to instantiate UserResolver", e);
         }

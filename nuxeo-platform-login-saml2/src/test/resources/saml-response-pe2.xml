@@ -54,7 +54,7 @@
 			xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 			<saml:Attribute Name="uid"
 				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
-				<saml:AttributeValue xsi:type="xs:string">USERDUMMY</saml:AttributeValue>
+				<saml:AttributeValue xsi:type="xs:string">userdummy</saml:AttributeValue>
 			</saml:Attribute>
 			<saml:Attribute Name="mail"
 				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
@@ -62,7 +62,7 @@
 			</saml:Attribute>
 			<saml:Attribute Name="employeeid"
 				NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">
-				<saml:AttributeValue xsi:type="xs:string">USERDUMMY</saml:AttributeValue>
+				<saml:AttributeValue xsi:type="xs:string">userdummy</saml:AttributeValue>
 			</saml:Attribute>
 		</saml:AttributeStatement>
 	</saml:Assertion>

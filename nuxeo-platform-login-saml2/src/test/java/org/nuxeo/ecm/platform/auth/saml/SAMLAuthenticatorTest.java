@@ -111,7 +111,7 @@ public class SAMLAuthenticatorTest {
         
         if (user == null) {
             user = userManager.getBareUserModel();
-            user.setPropertyValue(userManager.getUserIdField(), "user");
+            user.setPropertyValue(userManager.getUserIdField(), "userdummy");
             user.setPropertyValue(userManager.getUserEmailField(), "user@dummy.com");
             user = userManager.createUser(user);
         }
