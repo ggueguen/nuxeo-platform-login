@@ -78,14 +78,12 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
         try {
             Method method = userManager.getClass().getMethod(getUserManagerField());
             Object invoke = method.invoke(userManager);
-            log.debug(">>> getIdentificatorUserField "  + getUserManagerField() +" : " + invoke);
             value = (String)invoke;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
             log.error("Error while search user in UserManager using " + getUserManagerField() + " " + value, e);
             return null;
         }
         
-    //    return userManager.getUserEmailField();
         return value;
     }
     
