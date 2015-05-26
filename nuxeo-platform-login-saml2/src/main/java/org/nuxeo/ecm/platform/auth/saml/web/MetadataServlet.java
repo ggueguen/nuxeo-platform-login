@@ -17,6 +17,12 @@
 
 package org.nuxeo.ecm.platform.auth.saml.web;
 
+import java.io.IOException;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.ecm.platform.auth.saml.SAMLConfiguration;
@@ -28,11 +34,6 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.util.XMLHelper;
 import org.w3c.dom.Element;
-
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * Servlet that returns local SP metadata for configuring IdPs.
@@ -47,8 +48,16 @@ public class MetadataServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String baseURL = VirtualHostHelper.getBaseURL(request);
-        baseURL += (baseURL.endsWith("/") ? "" : "/") + NuxeoAuthenticationFilter.DEFAULT_START_PAGE;
 
+        log.debug("VirtualHostHelper.getBaseURL(request) => " + baseURL);
+        log.debug("nuxeo-virtual-host => " + request.getHeader("nuxeo-virtual-host"));
+//        for (Enumeration<String> e = request.getHeaderNames(); e.hasMoreElements();){
+//            String nextElement = e.nextElement();
+//            log.warn(nextElement+" => " + request.getHeader(nextElement));
+//        }
+        
+        baseURL += (baseURL.endsWith("/") ? "" : "/") + NuxeoAuthenticationFilter.DEFAULT_START_PAGE;
+        
         EntityDescriptor descriptor = SAMLConfiguration.getEntityDescriptor(baseURL);
 
         try {
