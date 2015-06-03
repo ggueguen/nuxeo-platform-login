@@ -56,6 +56,7 @@ public class SAMLConfiguration {
 
     public static final String WANT_ASSERTIONS_SIGNED = "nuxeo.saml2.wantAssertionsSigned";
 
+    // ADD PE ============================
     public static final String LOGIN_BINDING_URI_METHODE = "nuxeo.saml2.loginBindingUriMethode";
 
     public static final Collection<String> nameID = Arrays.asList(NameIDType.EMAIL, NameIDType.TRANSIENT,
@@ -118,9 +119,10 @@ public class SAMLConfiguration {
                     generateKeyInfoForCredential(keyManager.getTlsCredential())));
         }
 
+        // ADD PE >============================
         String loginBindingUriMethode = getLoginBindingUriMethode();
         if (!("Redirect".equals(loginBindingUriMethode) || "POST".equals(loginBindingUriMethode))){
-            throw new RuntimeException("nuxeo.saml2.loginBindingUriMethode value invalide : " + loginBindingUriMethode);
+            throw new RuntimeException("nuxeo.saml2.loginBindingUriMethode value invalide (Redirect ou POST) : " + loginBindingUriMethode);
         }
         
         if ("Redirect".equals(loginBindingUriMethode)){
@@ -143,6 +145,7 @@ public class SAMLConfiguration {
             consumer.setIsDefault(true);
             spDescriptor.getAssertionConsumerServices().add(consumer);
         }
+        // ADD PE <============================
         
         // LOGOUT - SAML2_POST_BINDING_URI
         SingleLogoutService logoutService = build(SingleLogoutService.DEFAULT_ELEMENT_NAME);
