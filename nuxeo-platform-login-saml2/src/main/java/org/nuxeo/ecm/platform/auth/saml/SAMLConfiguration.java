@@ -20,6 +20,7 @@ package org.nuxeo.ecm.platform.auth.saml;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
@@ -57,7 +58,7 @@ public class SAMLConfiguration {
     public static final String WANT_ASSERTIONS_SIGNED = "nuxeo.saml2.wantAssertionsSigned";
 
     // ADD PE ============================
-    public static final String LOGIN_BINDING_URI_METHODE = "nuxeo.saml2.loginBindingUriMethode";
+    public static final String LOGIN_BINDING_URI_METHODES = "nuxeo.saml2.loginBindingUriMethodes.list";
 
     public static final Collection<String> nameID = Arrays.asList(NameIDType.EMAIL, NameIDType.TRANSIENT,
         NameIDType.PERSISTENT, NameIDType.UNSPECIFIED, NameIDType.X509_SUBJECT);
@@ -78,8 +79,8 @@ public class SAMLConfiguration {
         return Boolean.parseBoolean(Framework.getProperty(WANT_ASSERTIONS_SIGNED));
     }
 
-    public static String getLoginBindingUriMethode() {
-        return Framework.getProperty(LOGIN_BINDING_URI_METHODE, "POST");
+    public static String getLoginBindingUriMethodes() {
+        return Framework.getProperty(LOGIN_BINDING_URI_METHODES, "REDIRECT,POST");
     }
     
     /**
@@ -120,31 +121,38 @@ public class SAMLConfiguration {
         }
 
         // ADD PE >============================
-        String loginBindingUriMethode = getLoginBindingUriMethode();
-        if (!("Redirect".equals(loginBindingUriMethode) || "POST".equals(loginBindingUriMethode))){
-            throw new RuntimeException("nuxeo.saml2.loginBindingUriMethode value invalide (Redirect ou POST) : " + loginBindingUriMethode);
-        }
+        List<String> loginBindingUriMethodes = Arrays.asList(getLoginBindingUriMethodes().split(","));
+
+        int i = 1;
         
-        if ("Redirect".equals(loginBindingUriMethode)){
+        if (loginBindingUriMethodes.contains("REDIRECT")){
         
             // LOGIN - SAML2_REDIRECT_BINDING_URI
             AssertionConsumerService consumer = build(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
             consumer.setLocation(baseURL);
             consumer.setBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-            consumer.setIndex(0);
+            consumer.setIndex(i++);
             consumer.setIsDefault(true);
             spDescriptor.getAssertionConsumerServices().add(consumer);
             
-        } else {
+        } 
+
+        if (loginBindingUriMethodes.contains("POST")){
             
             // LOGIN - SAML2_POST_BINDING_URI
             AssertionConsumerService consumer = build(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
             consumer.setLocation(baseURL);
             consumer.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
-            consumer.setIndex(0);
-            consumer.setIsDefault(true);
+            consumer.setIndex(i++);
+            if (i == 2)
+                consumer.setIsDefault(true);
             spDescriptor.getAssertionConsumerServices().add(consumer);
         }
+        
+        if (i == 1){
+            throw new RuntimeException("nuxeo.saml2.loginBindingUriMethodes.list values invalid (REDIRECT,POST) : " + getLoginBindingUriMethodes());
+        }
+        
         // ADD PE <============================
         
         // LOGOUT - SAML2_POST_BINDING_URI
