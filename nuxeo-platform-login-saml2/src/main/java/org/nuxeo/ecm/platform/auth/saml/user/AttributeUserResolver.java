@@ -22,9 +22,9 @@ import org.opensaml.xml.schema.XSString;
 
 public class AttributeUserResolver  extends UserResolver {
 
-private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]+(\\.[a-z0-9-]+)+$";
+    private static final Log LOG = LogFactory.getLog(AttributeUserResolver.class);
 
-    private static final Log log = LogFactory.getLog(AttributeUserResolver.class);
+    public static final String MAIL_REGEX = "^[_a-zA-Z0-9-]+(\\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)+$";
 
     public static final String IDENTIFICATOR_ATTRIBUTE = "nuxeo.saml2.identificator.attribute";
 
@@ -40,7 +40,7 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
     
     
     private boolean valideMail(String mail){
-        return Pattern.matches(mailRegex, mail);
+        return Pattern.matches(MAIL_REGEX, mail);
     }
 
     protected String getValueFromCredential(SAMLCredential credential) {
@@ -80,7 +80,7 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
             Object invoke = method.invoke(userManager);
             value = (String)invoke;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-            log.error("Error while search user in UserManager using " + getUserManagerField() + " " + value, e);
+            LOG.error("Error while search user in UserManager using " + getUserManagerField() + " " + value, e);
             return null;
         }
         
@@ -109,7 +109,7 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
             return (String) user.getPropertyValue(userManager.getUserIdField());
             
         } catch (ClientException e) {
-            log.error("Error while search user in UserManager using " + identificatorUserField + value, e);
+            LOG.error("Error while search user in UserManager using " + identificatorUserField + value, e);
             return null;
         }
     }
@@ -125,7 +125,7 @@ private static final String mailRegex = "^[_a-z0-9-]+(\\.[_a-z0-9-]+)*@[a-z0-9-]
             identificatorUserField = getIdentificatorUserField(userManager);
             user.setPropertyValue(identificatorUserField, value);
         } catch (ClientException e) {
-            log.error("Error while search user in UserManager using " + identificatorUserField + value, e);
+            LOG.error("Error while search user in UserManager using " + identificatorUserField + value, e);
             return null;
         }
         return user;
